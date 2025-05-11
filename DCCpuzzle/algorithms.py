@@ -25,9 +25,40 @@ class BaseSearch:
 
 class BFS(BaseSearch):
     def solve(self):
-        # Completar - Parte 1 
+        root = MultiNode(self.problem.initial_state)
+        frontier = deque([root])
+        explored = set()
+        expansions = 0
+        goal_node = None
+
+        t0 = time.time()
+
+        while frontier:
+            node = frontier.popleft()
+            if node.state.is_goal():
+                goal_node = node
+                break
+            expansions += 1
+            explored.add(node.state)
+
+            for succ_state, action, cost, _ in node.state.h_successors(lambda s: 0):
+                if succ_state in explored:
+                    continue
+                child = MultiNode(succ_state, parent=node, action=action)
+                frontier.append(child)
+
+        elapsed_ms = (time.time() - t0) * 1000
+
+        # reconstrucción del camino
+        path = []
+        cur = goal_node
+        while cur:
+            path.append(cur)
+            cur = cur.parent
+        path.reverse()
 
         return SearchResult(path, expansions, elapsed_ms)
+
 
 
 class DFS(BaseSearch):
