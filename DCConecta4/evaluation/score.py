@@ -72,3 +72,49 @@ def chat_gpt_eval(board, player: int) -> float:
 
  
 #--- AÑADE AQUÍ TUS FUNCIONES DE EVALUACIÓN  ---#
+def puntaje_centralizado(board, player_id):
+    """
+    Heurística que evalúa el estado actual del tablero desde la perspectiva del jugador dado.
+
+    Esta función combina tres elementos estratégicos:
+    1. Control posicional: se favorecen las fichas en columnas centrales.
+    2. Estrategia ofensiva: se bonifican alineaciones propias (2 o más fichas consecutivas).
+    3. Estrategia defensiva: se penalizan alineaciones del oponente.
+
+    Retorna un número real que representa la conveniencia del estado del tablero.
+    """
+    import numpy as np
+    opponent_id = 3 - player_id
+    score = 0
+
+    # Pesos que favorecen el control del centro del tablero
+    center_weights = np.array([1, 2, 3, 4, 3, 2, 1])
+    height, width = board.shape
+
+    # Evaluación posicional: premia posiciones centrales y penaliza control del oponente
+    for i in range(height):
+        for j in range(width):
+            if board[i][j] == player_id:
+                score += center_weights[j]
+            elif board[i][j] == opponent_id:
+                score -= 0.5 * center_weights[j]
+
+    # Función auxiliar para contar fichas alineadas en una dirección (hasta 4 posiciones)
+    def count_aligned(x, y, dx, dy, target_id):
+        count = 0
+        for k in range(4):
+            nx, ny = x + k * dx, y + k * dy
+            if 0 <= nx < height and 0 <= ny < width and board[nx][ny] == target_id:
+                count += 1
+        return count
+
+    # Revisión de alineaciones propias y del oponente en 4 direcciones
+    for i in range(height):
+        for j in range(width):
+            for dx, dy in [(0,1), (1,0), (1,1), (1,-1)]:
+                if count_aligned(i, j, dx, dy, player_id) >= 2:
+                    score += 10
+                if count_aligned(i, j, dx, dy, opponent_id) >= 2:
+                    score -= 8
+
+    return score

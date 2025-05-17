@@ -31,12 +31,13 @@ def main():
 
     # 5) Instanciar algoritmos
     algorithms = [
-        ("BFS", BFS(p)), # Parte 1 
-        # (f"A* ({adm_h_name})", AStar(p, adm_h)), # Parte 2 y Parte 3
-        # ("Focal w=1", FocalSearch(init, inad_h, adm_h, weight=1)),         # Parte 3
-        # (f"Focal w=1.2", FocalSearch(init, inad_h, adm_h, weight=1.2)),    # Parte 3
-        # (f"Focal w=1.5", FocalSearch(init, inad_h, adm_h, weight=1.5)),    # Parte 3
-        # (f"Focal w=2", FocalSearch(init, inad_h, adm_h, weight=2))         # Parte 3
+        #("DFS", DFS(p)), # Parte 1 
+        #("BFS", BFS(p)), # Parte 1 
+        #(f"A* ({adm_h_name})", AStar(p, adm_h)), # Parte 2 y Parte 3
+        ("Focal w=1", FocalSearch(init, inad_h, adm_h, weight=1)),         # Parte 3
+        (f"Focal w=1.2", FocalSearch(init, inad_h, adm_h, weight=1.2)),    # Parte 3
+        (f"Focal w=1.5", FocalSearch(init, inad_h, adm_h, weight=1.5)),    # Parte 3
+        (f"Focal w=2", FocalSearch(init, inad_h, adm_h, weight=2))         # Parte 3
     ]
 
     # 6) Ejecutar y recoger resultados

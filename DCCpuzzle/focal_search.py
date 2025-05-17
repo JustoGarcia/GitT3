@@ -22,17 +22,83 @@ class FocalSearch:
 
     def solve(self):
         # MODIFICAR ESTO EN BASE A VERSIÓN DE FOCAL SEARCH
-        return self.heuristic_search(self.weight) # <-- para focal_search
-        # return self.discrepancy_search(self.weight) # <- para focal_discrepancy_search
+        #return self.heuristic_search(self.weight) # <-- para focal_search
+        return self.discrepancy_search(self.weight) # <- para focal_discrepancy_search
     
     def heuristic_search(self, focal_w=1):
-        # Completar
-        """
-        Focal Search “normal”: la FOCAL list se ordena por la heurística inadmisible.
-        - open list (self.open, heap 0) ordenada por f_adm = g + adm_h
-        - focal list (self.preferred, heap 1) ordenada por h_inad
-        """
-    
+        
+        # 1. Reiniciar métricas
+        t0 = time.time()
+        self.expansions = 0
+        self.open.clear()
+        self.preferred.clear()
+        self.generated = {}
+
+        # 2. Nodo raíz
+        root = MultiNode(self.initial_state)
+        root.g = 0
+        root.h[0] = self.inad_h(self.initial_state)  # h_inad
+        root.h[1] = self.adm_h(self.initial_state)   # h_adm
+        root.key[0] = root.h[0]                      # clave para heap 0 (open): h_inad
+        root.key[1] = self.fvalue(root.g, root.h[1]) # clave para heap 1 (focal): f_adm
+
+        # 3. Insertar en heaps y registrar nodo
+        self.open.insert(root)
+        self.preferred.insert(root)
+        self.generated[self.initial_state] = root
+
+        # 4. Loop de expansión
+        while not self.preferred.is_empty():
+            # 4.1 timeout de 30 min
+            if time.time() - t0 > 1800:
+                print("TIME OUT")
+                return SearchResult([], self.expansions, (time.time()-t0)*1000)
+
+            # 4.2 obtener f_min
+            f_min = self.open.top().key[1]
+
+            # 4.3 extraer mejor nodo de preferred y remover de open
+            node = self.preferred.extract()
+            self.open.extract(node.heap_index[0])
+            self.expansions += 1
+
+            # 4.4 verificar objetivo
+            if node.state.is_goal():
+                elapsed = (time.time() - t0) * 1000
+                return SearchResult(node.path(), self.expansions, elapsed)
+
+            # 4.5 expandir sucesores
+            for child_state, action, cost, _ in node.state.successors():
+                g2 = node.g + cost
+                child = self.generated.get(child_state)
+
+                if child is None or g2 < child.g:
+                    if child is None:
+                        child = MultiNode(child_state)
+                        self.generated[child_state] = child
+
+                    child.parent = node
+                    child.action = action
+                    child.g = g2
+
+                    # 4.6 calcular heurísticas
+                    child.h[0] = self.inad_h(child_state)   # h_inad
+                    child.h[1] = self.adm_h(child_state)    # h_adm
+
+                    # 4.7 claves para heaps
+                    child.key[0] = child.h[0]  # heap 0: ordenar por h_inad
+                    child.key[1] = self.fvalue(child.g, child.h[1])  # heap 1: ordenar por f_adm
+
+                    # 4.8 insertar en heaps
+                    self.open.insert(child)
+                    if child.key[1] <= focal_w * f_min:
+                        self.preferred.insert(child)
+
+        # 5. No se encontró solución
+        elapsed = (time.time() - t0) * 1000
+        return SearchResult([], self.expansions, elapsed)
+
+
     def discrepancy_search(self, focal_w=1): 
         # NO MODIFICAR
         """

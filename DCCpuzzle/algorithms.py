@@ -7,6 +7,9 @@ from multi_node import MultiNode
 from multi_binary_heap import MultiBinaryHeap
 from puzzle import Puzzle15State
 
+import time
+from collections import defaultdict
+
 class SearchResult:
     # NO MODIFICAR
     def __init__(self, path, expansions, elapsed_ms):
@@ -102,34 +105,48 @@ class AStar(BaseSearch):
     def __init__(self, problem, heuristic):
         super().__init__(problem)
         self.heuristic = heuristic
-        # usaremos heap id=0 para f-values
-        self.heap = MultiBinaryHeap(id=0) # puedes cambiarlo a la EDD que prefieras
+        self.heap = MultiBinaryHeap(id=0)  # Cola por f = g + h
 
     def solve(self):
-        # nodo raíz
         root = MultiNode(self.problem.initial_state)
         root.g = 0
         root.h[0] = self.heuristic(root.state)
         root.key[0] = root.g + root.h[0]
 
-        # inicializar heap
         self.heap.clear()
         self.heap.insert(root)
 
-        # inicializar contadores y estructuras
+        visited = {root.state: 0}
         expansions = 0
-        t0 = time.time()
         goal_node = None
+        t0 = time.time()
 
         while not self.heap.is_empty():
-            # Completar - Parte 2
-            pass
+            current = self.heap.extract()
+            if current.state.is_goal():
+                goal_node = current
+                break
 
-        # reconstruir camino
+            expansions += 1
+
+            for succ_state, action, cost, _ in current.state.h_successors(self.heuristic):
+                g_new = current.g + cost
+                if succ_state not in visited or g_new < visited[succ_state]:
+                    visited[succ_state] = g_new
+                    child = MultiNode(succ_state, parent=current, action=action)
+                    child.g = g_new
+                    child.h[0] = self.heuristic(succ_state)
+                    child.key[0] = child.g + child.h[0]
+                    self.heap.insert(child)
+
+        elapsed = (time.time() - t0) * 1000  # en ms
+
+        # reconstrucción del camino
         path = []
         cur = goal_node
         while cur:
             path.append(cur)
             cur = cur.parent
         path.reverse()
+
         return SearchResult(path, expansions, elapsed)
